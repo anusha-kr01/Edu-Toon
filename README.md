@@ -24,13 +24,13 @@ EduToon is an AI-powered platform that converts tough academic concepts into hum
 
 ## 🛠️ Tech Stack
 
-| Component        | Tool/Library                     |
-|------------------|----------------------------------|
-| UI               | Streamlit                        |
-| NLP & Scripting  | OpenAI GPT (via API)             |
-| Image Generation | Midjourney / Stable Diffusion    |
-| Comic Layout     | PIL / Figma / HTML + CSS         |
-| Hosting          | Streamlit Cloud / Hugging Face   |
+| Component        | Tool/Library                   |
+|------------------|-------------------------------|
+| UI               | Streamlit                     |
+| NLP & Scripting  | OpenAI GPT (via API)          |
+| Image Generation | Midjourney / Stable Diffusion |
+| Comic Layout     | PIL / Figma / HTML + CSS      |
+| Hosting          | Streamlit Cloud / Hugging Face|
 
 ---
 
@@ -52,6 +52,7 @@ Create a `.env` file in the root directory:
 ```ini
 OPENAI_API_KEY=your_openai_key
 STABILITY_API_KEY=your_stable_diffusion_key
+DEEPINFRA_API_KEY=your_deepinfra_openai_key
 ```
 
 ### 4. Run the app
@@ -69,11 +70,17 @@ A 4-panel comic featuring a wizard teaching a confused bunny recursion using mag
 
 ---
 
+
+⚠️ Known Issues
+Comic image generation may sometimes fail or be slow due to API limits or connectivity issues.
+When image generation fails, fallback placeholder images are shown instead.
+
+
 ## 🎯 Roadmap
 
 - [x] Input concept + generate script  
 - [x] AI-generated images  
-- [x] Comic layout rendering  
+- [ ] Comic layout rendering  
 - [ ] Export/share comic  
 - [ ] Add character styles/themes  
 - [ ] Add user feedback system  
