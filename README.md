@@ -38,8 +38,8 @@ EduToon is an AI-powered platform that converts tough academic concepts into hum
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/yourusername/edutoon.git
-cd edutoon
+git clone https://github.com/anusha-kr01/Edu-Toon.git
+cd edutoon     # Change this if you rename the folder after cloning
 ```
 
 ### 2. Install dependencies
@@ -96,6 +96,4 @@ MIT License — use freely, credit appreciated.
 
 ## 💬 Connect
 
-**Email:** your.email@example.com  
-**Twitter:** [@yourhandle](https://twitter.com/yourhandle)  
-**Portfolio:** [yourportfolio.com](https://yourportfolio.com)
+**Email:** anushakr719@gmail.com  
