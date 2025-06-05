@@ -8,8 +8,7 @@ import re
 import time
 import os
 from PIL import Image, ImageDraw, ImageFont
-import io
-import base64
+from io import BytesIO
 
 # Set up the app
 st.set_page_config(page_title="EduToon", layout="wide")
@@ -60,10 +59,7 @@ def extract_formulas_with_names(concept):
 def extract_formula_like_strings(text):
     lines = text.split('\n')
     formula_pattern = re.compile(r'^[A-Za-z0-9_ ()^/\\+\-*\=\.{\}]+=[A-Za-z0-9_ ()^/\\+\-*\=\.{\}]+$')
-    formulas = []
-    for line in lines:
-        if '=' in line and formula_pattern.match(line.strip()):
-            formulas.append(line.strip())
+    formulas = [line.strip() for line in lines if '=' in line and formula_pattern.match(line.strip())]
     return list(set(formulas))
 
 def extract_clean_wiki_text(concept):
@@ -89,60 +85,19 @@ def extract_clean_wiki_text(concept):
 # Image generation functions
 @st.cache_data(ttl=3600, show_spinner="Generating image...")
 def generate_image(prompt, attempt=1):
-    api_key = os.getenv("STABILITY_API_KEY") or st.secrets.get("STABILITY_API_KEY", "")
-    if not api_key:
-        st.warning("No Stability API Key provided. Using fallback image.")
-        return None
-
-    configs = [
-        {
-            "url": "https://api.stability.ai/v2beta/stable-image/generate/sd3",
-            "headers": {
-                "Authorization": f"Bearer {api_key}",
-                "Accept": "image/png",
-                "Content-Type": "application/json"
-            },
-            "json": {
-                "prompt": prompt,
-                "model": "sd3",
-                "output_format": "png"
-            }
+    response = requests.post(
+        "https://api.stability.ai/v2beta/stable-image/generate/ultra",
+        headers={
+            "authorization": "Bearer sk-DA0mKVfYfz23LYCQUI2C1HYvX6xlm17U9MROyN9OzogDA0ZU",
+            "accept": "image/*"
         },
-        {
-            "url": "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image",
-            "headers": {
-                "Authorization": f"Bearer {api_key}",
-                "Accept": "application/json",
-                "Content-Type": "application/json"
-            },
-            "json": {
-                "text_prompts": [{"text": prompt}],
-                "cfg_scale": 7,
-                "height": 512,
-                "width": 512,
-                "steps": 30
-            }
-        }
-    ]
-
-    for config in configs:
-        try:
-            response = requests.post(config["url"], headers=config["headers"], json=config.get("json"))
-            response.raise_for_status()
-
-            if response.headers.get('Content-Type') == 'image/png':
-                return Image.open(io.BytesIO(response.content))
-            elif response.headers.get('Content-Type') == 'application/json':
-                image_data = response.json()
-                base64_img = image_data["artifacts"][0]["base64"]
-                return Image.open(io.BytesIO(base64.b64decode(base64_img)))
-        except Exception as e:
-            st.warning(f"Attempt {attempt} failed: {str(e)}")
-            time.sleep(1)
-            attempt += 1
-
-    return None
-
+        files={"none": ''},
+        data={
+            "prompt": prompt,
+            "output_format": "webp",
+        },
+    )
+    return response
 
 def get_fallback_image(panel_text):
     img = Image.new('RGB', (512, 512), color=(60, 90, 130))
@@ -157,7 +112,6 @@ def get_fallback_image(panel_text):
     offset = 30
     max_width = img.width - 2 * margin
 
-    # Wrap text
     lines = []
     words = panel_text.split()
     line = ""
@@ -177,7 +131,6 @@ def get_fallback_image(panel_text):
 
     return img
 
-
 # Text generation functions
 openai.api_key = os.getenv("DEEPINFRA_API_KEY") or st.secrets.get("DEEPINFRA_API_KEY", "")
 openai.api_base = "https://api.deepinfra.com/v1/openai"
@@ -189,7 +142,6 @@ def generate_comic_story(concept):
         "to a 12-year-old. Be silly but informative. Each panel should be short and visual.\n\n"
         "Format:\nPanel 1: [description]\nPanel 2: [description]\nPanel 3: [description]"
     )
-
     try:
         response = openai.ChatCompletion.create(
             model="mistralai/Mistral-7B-Instruct-v0.1",
@@ -290,13 +242,14 @@ if concept:
 
                     simple_prompt = simplify_panel_text(panel_text)
                     prompt = f"Educational comic panel: {simple_prompt}, cartoon style, colorful, clear illustration"
-                    
+
                     with st.spinner(f"Generating image for Panel {idx+1}..."):
                         time.sleep(1)
-                        img = generate_image(prompt)
-                        
-                        if img is None:
-                            st.warning("Couldn't generate AI image. Using placeholder.")
-                            img = get_fallback_image(panel_text)
-                        
-                        st.image(img, caption=f"Panel {idx+1}", use_column_width=True)
+                        response = generate_image(prompt)
+
+                        if response.status_code == 200:
+                            img_bytes = BytesIO(response.content)
+                            img = Image.open(img_bytes)
+                            st.image(img, caption=f"Panel {idx+1}", use_container_width=True)
+                        else:
+                            st.error(f"Error generating image: {response.json()}")
